@@ -19,50 +19,68 @@ class SecurityHeaders {
         $allow_youtube = get_option('security_allow_youtube', false);
         $allow_twitter = get_option('security_allow_twitter', false);
 
+        // Get custom domain settings
+        $allowed_script_domains = array_filter(array_map('trim', explode("\n", get_option('security_allowed_script_domains', ''))));
+        $allowed_style_domains = array_filter(array_map('trim', explode("\n", get_option('security_allowed_style_domains', ''))));
+        $allowed_image_domains = array_filter(array_map('trim', explode("\n", get_option('security_allowed_image_domains', ''))));
+        $allowed_frame_domains = array_filter(array_map('trim', explode("\n", get_option('security_allowed_frame_domains', ''))));
+
         // Get the site domain
         $site_domain = parse_url(get_site_url(), PHP_URL_HOST);
 
         // WordPress-specific CSP directives with more permissive defaults
         $csp = array(
             "default-src" => array("'self'", "https:", "data:"),
-            "script-src" => array(
-                "'self'",
-                "'unsafe-inline'",
-                "'unsafe-eval'",
-                "https:",
-                "blob:",
-                "*.wordpress.org",
-                "*.wp.com",
-                "*.google.com",
-                "*.googleapis.com",
-                "*.gstatic.com",
-                $site_domain
+            "script-src" => array_merge(
+                array(
+                    "'self'",
+                    "'unsafe-inline'",
+                    "'unsafe-eval'",
+                    "https:",
+                    "blob:",
+                    "*.wordpress.org",
+                    "*.wp.com",
+                    "*.google.com",
+                    "*.googleapis.com",
+                    "*.gstatic.com",
+                    $site_domain
+                ),
+                $allowed_script_domains
             ),
-            "style-src" => array(
-                "'self'",
-                "'unsafe-inline'",
-                "https:",
-                "*.googleapis.com",
-                "*.gstatic.com",
-                $site_domain
+            "style-src" => array_merge(
+                array(
+                    "'self'",
+                    "'unsafe-inline'",
+                    "https:",
+                    "*.googleapis.com",
+                    "*.gstatic.com",
+                    $site_domain
+                ),
+                $allowed_style_domains
             ),
-            "img-src" => array(
-                "'self'",
-                "data:",
-                "https:",
-                "*.wp.com",
-                "*.wordpress.org",
-                "*.gravatar.com",
-                "*.googleusercontent.com",
-                "*.google.com",
-                "*.gstatic.com",
-                "*.bewakoof.com",
-                "form-ext.contlo.com",
-                $site_domain
+            "img-src" => array_merge(
+                array(
+                    "'self'",
+                    "data:",
+                    "https:",
+                    "*.wp.com",
+                    "*.wordpress.org",
+                    "*.gravatar.com",
+                    "*.googleusercontent.com",
+                    "*.google.com",
+                    "*.gstatic.com",
+                    "*.bewakoof.com",
+                    "form-ext.contlo.com",
+                    $site_domain
+                ),
+                $allowed_image_domains
             ),
             "font-src" => array("'self'", "data:", "https:", "*.gstatic.com", "*.googleapis.com"),
             "connect-src" => array("'self'", "https:", "*.google-analytics.com", "*.doubleclick.net"),
-            "frame-src" => array("'self'", "https:", "*.doubleclick.net", "*.google.com"),
+            "frame-src" => array_merge(
+                array("'self'", "https:", "*.doubleclick.net", "*.google.com"),
+                $allowed_frame_domains
+            ),
             "object-src" => array("'none'"),
             "base-uri" => array("'self'"),
             "form-action" => array("'self'", "https:"),
@@ -74,17 +92,25 @@ class SecurityHeaders {
         if ($enable_strict_csp) {
             $csp["script-src"] = array_merge(
                 array("'self'", "'unsafe-inline'", "'unsafe-eval'"),
-                array($site_domain, "*.wordpress.org", "*.wp.com")
+                array($site_domain, "*.wordpress.org", "*.wp.com"),
+                $allowed_script_domains
             );
             
             $csp["style-src"] = array_merge(
                 array("'self'", "'unsafe-inline'"),
-                array($site_domain, "*.googleapis.com")
+                array($site_domain, "*.googleapis.com"),
+                $allowed_style_domains
             );
             
             $csp["img-src"] = array_merge(
                 array("'self'", "data:"),
-                array($site_domain, "*.wp.com", "*.gravatar.com", "*.bewakoof.com")
+                array($site_domain, "*.wp.com", "*.gravatar.com", "*.bewakoof.com"),
+                $allowed_image_domains
+            );
+
+            $csp["frame-src"] = array_merge(
+                array("'self'"),
+                $allowed_frame_domains
             );
 
             // Add third-party service permissions
@@ -135,18 +161,18 @@ class SecurityHeaders {
     }
 
     private function set_security_headers() {
-        // Standard security headers
-        header('X-Frame-Options: SAMEORIGIN');
-        header('X-Content-Type-Options: nosniff');
-        header('Referrer-Policy: strict-origin-when-cross-origin');
-        
-        // Modern security headers with relaxed CORS policies
-        header('Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
-        header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
-        header('Cross-Origin-Resource-Policy: cross-origin');
-        
-        // Remove potentially dangerous headers
-        header_remove('Server');
-        header_remove('X-Powered-By');
-    }
+    // Standard security headers
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    
+    // Modern security headers with relaxed CORS policies
+    header('Permissions-Policy: accelerometer=(), camera=*, geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=*, usb=()');
+    header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
+    header('Cross-Origin-Resource-Policy: cross-origin');
+    
+    // Remove potentially dangerous headers
+    header_remove('Server');
+    header_remove('X-Powered-By');
+}
 }
