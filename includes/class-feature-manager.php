@@ -55,21 +55,36 @@ class FeatureManager {
             return;
         }
 
+        // Always allow WooCommerce AJAX requests
+        if (isset($_GET['wc-ajax'])) {
+            return;
+        }
+
         // Check if current path matches any excluded path with specific query
         foreach ($this->get_excluded_paths() as $excluded) {
             if (empty($excluded)) {
                 continue;
             }
 
-            $excluded_parts = parse_url($excluded);
-            $excluded_path = isset($excluded_parts['path']) ? trim($excluded_parts['path'], '/') : '';
-            $excluded_query = isset($excluded_parts['query']) ? $excluded_parts['query'] : '';
-            
-            $current_path = trim($path, '/');
-            
-            // If path matches and query matches exactly, allow it
-            if ($current_path === $excluded_path && $query === $excluded_query) {
-                return;
+            // Handle both full paths and query parameters
+            if (strpos($excluded, '?') === 0) {
+                // This is a query parameter exclusion
+                $param = trim($excluded, '?=');
+                if (isset($_GET[$param])) {
+                    return;
+                }
+            } else {
+                // This is a path exclusion
+                $excluded_parts = parse_url($excluded);
+                $excluded_path = isset($excluded_parts['path']) ? trim($excluded_parts['path'], '/') : '';
+                $excluded_query = isset($excluded_parts['query']) ? $excluded_parts['query'] : '';
+                
+                $current_path = trim($path, '/');
+                
+                // If path matches and query matches exactly, allow it
+                if ($current_path === $excluded_path && $query === $excluded_query) {
+                    return;
+                }
             }
         }
 
@@ -225,7 +240,6 @@ class FeatureManager {
         }
         return $this->excluded_paths_cache;
     }
-
 
     public function get_blocked_patterns() {
         return array_filter(array_map('trim', explode("\n", $this->get_option('security_blocked_patterns', ''))));
