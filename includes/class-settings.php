@@ -41,7 +41,11 @@ class SecuritySettings {
             'enable_xss' => get_option('security_enable_xss', true),
             'enable_waf' => get_option('security_enable_waf', true),
             'waf_request_limit' => get_option('security_waf_request_limit', 100),
-            'waf_blacklist_threshold' => get_option('security_waf_blacklist_threshold', 5)
+            'waf_blacklist_threshold' => get_option('security_waf_blacklist_threshold', 5),
+            'allowed_script_domains' => get_option('security_allowed_script_domains', ''),
+            'allowed_style_domains' => get_option('security_allowed_style_domains', ''),
+            'allowed_image_domains' => get_option('security_allowed_image_domains', ''),
+            'allowed_frame_domains' => get_option('security_allowed_frame_domains', '')
         );
         ?>
         <div class="wrap">
@@ -49,6 +53,30 @@ class SecuritySettings {
             <form method="post" action="">
                 <?php wp_nonce_field('security_settings_nonce', 'security_nonce'); ?>
                 <table class="form-table">
+                    <tr>
+                        <th>Content Security Policy Domains</th>
+                        <td>
+                            <p><strong>Script Domains (script-src)</strong></p>
+                            <textarea name="allowed_script_domains" rows="3" cols="50" class="large-text"><?php echo esc_textarea($options['allowed_script_domains']); ?></textarea>
+                            <p class="description">Enter one domain per line (e.g., checkout.razorpay.com). These domains will be allowed to load scripts.</p>
+                            
+                            <br><br>
+                            <p><strong>Style Domains (style-src)</strong></p>
+                            <textarea name="allowed_style_domains" rows="3" cols="50" class="large-text"><?php echo esc_textarea($options['allowed_style_domains']); ?></textarea>
+                            <p class="description">Enter one domain per line for custom style sources.</p>
+                            
+                            <br><br>
+                            <p><strong>Image Domains (img-src)</strong></p>
+                            <textarea name="allowed_image_domains" rows="3" cols="50" class="large-text"><?php echo esc_textarea($options['allowed_image_domains']); ?></textarea>
+                            <p class="description">Enter one domain per line (e.g., mellmon.in, cdn.razorpay.com). These domains will be allowed to load images.</p>
+                            
+                            <br><br>
+                            <p><strong>Frame Domains (frame-src)</strong></p>
+                            <textarea name="allowed_frame_domains" rows="3" cols="50" class="large-text"><?php echo esc_textarea($options['allowed_frame_domains']); ?></textarea>
+                            <p class="description">Enter one domain per line for allowed iframe sources.</p>
+                        </td>
+                    </tr>
+
                     <tr>
                         <th>XSS Protection</th>
                         <td>
@@ -235,6 +263,10 @@ class SecuritySettings {
         update_option('security_waf_request_limit', intval($_POST['waf_request_limit']));
         update_option('security_waf_blacklist_threshold', intval($_POST['waf_blacklist_threshold']));
         update_option('security_remove_query_strings', isset($_POST['remove_query_strings']));
+        update_option('security_allowed_script_domains', sanitize_textarea_field($_POST['allowed_script_domains']));
+        update_option('security_allowed_style_domains', sanitize_textarea_field($_POST['allowed_style_domains']));
+        update_option('security_allowed_image_domains', sanitize_textarea_field($_POST['allowed_image_domains']));
+        update_option('security_allowed_frame_domains', sanitize_textarea_field($_POST['allowed_frame_domains']));
     }
 
     public function register_settings() {
@@ -257,5 +289,9 @@ class SecuritySettings {
         register_setting('security_settings', 'security_remove_wp_generator');
         register_setting('security_settings', 'security_waf_request_limit');
         register_setting('security_settings', 'security_waf_blacklist_threshold');
+        register_setting('security_settings', 'security_allowed_script_domains');
+        register_setting('security_settings', 'security_allowed_style_domains');
+        register_setting('security_settings', 'security_allowed_image_domains');
+        register_setting('security_settings', 'security_allowed_frame_domains');
     }
 }
