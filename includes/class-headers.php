@@ -30,7 +30,7 @@ class SecurityHeaders {
 
         // WordPress-specific CSP directives with more permissive defaults
         $csp = array(
-            "default-src" => array("'self'", "https:", "data:"),
+            "default-src" => array("'self'", "https:", "data:", "blob:"),
             "script-src" => array_merge(
                 array(
                     "'self'",
@@ -76,7 +76,7 @@ class SecurityHeaders {
                 $allowed_image_domains
             ),
             "font-src" => array("'self'", "data:", "https:", "*.gstatic.com", "*.googleapis.com"),
-            "connect-src" => array("'self'", "https:", "*.google-analytics.com", "*.doubleclick.net"),
+            "connect-src" => array("'self'", "https:", "*.google-analytics.com", "*.doubleclick.net", "blob:"),
             "frame-src" => array_merge(
                 array("'self'", "https:", "*.doubleclick.net", "*.google.com"),
                 $allowed_frame_domains
@@ -85,13 +85,13 @@ class SecurityHeaders {
             "base-uri" => array("'self'"),
             "form-action" => array("'self'", "https:"),
             "frame-ancestors" => array("'self'"),
-            "manifest-src" => array("'self'")
+            "manifest-src" => array("'self'", "blob:")
         );
 
         // If strict CSP is enabled, use more restrictive rules but still allow essential resources
         if ($enable_strict_csp) {
             $csp["script-src"] = array_merge(
-                array("'self'", "'unsafe-inline'", "'unsafe-eval'"),
+                array("'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"),
                 array($site_domain, "*.wordpress.org", "*.wp.com"),
                 $allowed_script_domains
             );
@@ -103,13 +103,13 @@ class SecurityHeaders {
             );
             
             $csp["img-src"] = array_merge(
-                array("'self'", "data:"),
-                array($site_domain, "*.wp.com", "*.gravatar.com", "*.bewakoof.com"),
+                array("'self'", "data:", "blob:"),
+                array($site_domain, "*.wp.com", "*.gravatar.com", "*.bewakoof.com", "form-ext.contlo.com"),
                 $allowed_image_domains
             );
 
             $csp["frame-src"] = array_merge(
-                array("'self'"),
+                array("'self'", "blob:"),
                 $allowed_frame_domains
             );
 
@@ -161,18 +161,18 @@ class SecurityHeaders {
     }
 
     private function set_security_headers() {
-    // Standard security headers
-    header('X-Frame-Options: SAMEORIGIN');
-    header('X-Content-Type-Options: nosniff');
-    header('Referrer-Policy: strict-origin-when-cross-origin');
-    
-    // Modern security headers with relaxed CORS policies
-    header('Permissions-Policy: accelerometer=(), camera=*, geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=*, usb=()');
-    header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
-    header('Cross-Origin-Resource-Policy: cross-origin');
-    
-    // Remove potentially dangerous headers
-    header_remove('Server');
-    header_remove('X-Powered-By');
-}
+        // Standard security headers
+        header('X-Frame-Options: SAMEORIGIN');
+        header('X-Content-Type-Options: nosniff');
+        header('Referrer-Policy: strict-origin-when-cross-origin');
+        
+        // Modern security headers with relaxed CORS policies
+        header('Permissions-Policy: accelerometer=(), camera=*, geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=*, usb=()');
+        header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
+        header('Cross-Origin-Resource-Policy: cross-origin');
+        
+        // Remove potentially dangerous headers
+        header_remove('Server');
+        header_remove('X-Powered-By');
+    }
 }
