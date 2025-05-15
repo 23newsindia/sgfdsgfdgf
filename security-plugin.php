@@ -18,6 +18,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-cookie-consent.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-sanitization.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-feature-manager.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-settings.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-asset-protection.php';
 
 class CustomSecurityPlugin {
     private $waf;
@@ -26,6 +27,7 @@ class CustomSecurityPlugin {
     private $sanitization;
     private $feature_manager;
     private $settings;
+    private $asset_protection;
 
     public function __construct() {
         // Only load components when needed
@@ -43,6 +45,7 @@ class CustomSecurityPlugin {
             }
             
             $this->waf = new SecurityWAF();
+            $this->asset_protection = new AssetProtection();
         }
 
         // Always load these components
